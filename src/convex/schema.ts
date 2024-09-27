@@ -20,7 +20,7 @@ const tasks = defineEnt({
 	text: v.string(),
 	isCompleted: v.boolean(),
 	userId: v.id('users')
-});
+}).index('by_user', ['userId']);
 
 // Schema
 const schema = defineEntSchema({

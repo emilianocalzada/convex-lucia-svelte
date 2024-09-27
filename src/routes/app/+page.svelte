@@ -1,14 +1,42 @@
 <script lang="ts">
-	import { useQuery } from 'convex-svelte';
+	import { useQuery, useConvexClient } from 'convex-svelte';
 	import { api } from '../../convex/_generated/api';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { enhance } from '$app/forms';
 
-	export let data;
-	const query = useQuery(api.tasks.get, {});
+	let { data } = $props();
+	const sessionId = data.session?.id;
+	const convex = useConvexClient();
+
+	const query = useQuery(api.tasks.get, {
+		sessionId: sessionId
+	});
+	async function addTask(text: string, isCompleted: boolean) {
+		await convex.mutation(api.tasks.add, {
+			sessionId: sessionId,
+			text: text,
+			isCompleted: isCompleted
+		});
+	}
+
+	let text = $state('');
+	let isCompleted = $state(false);
 </script>
 
 <h2>Welcome {data.user?.email}</h2>
+
+<form
+	onsubmit={(e) => {
+		e.preventDefault();
+		addTask(text, isCompleted);
+		text = '';
+		isCompleted = false;
+	}}
+>
+	<input type="text" name="text" placeholder="Task" required bind:value={text} />
+	<input type="checkbox" name="isCompleted" bind:checked={isCompleted} />
+	<Button type="submit" disabled={!text}>Add Task</Button>
+</form>
 
 {#if query.isLoading}
 	Loading...

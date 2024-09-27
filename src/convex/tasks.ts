@@ -1,18 +1,35 @@
-import { queryWithAuth } from './auth/withAuth';
+import { ConvexError, v } from 'convex/values';
+import { mutationWithAuth, queryWithAuth } from './auth/withAuth';
 
 export const get = queryWithAuth({
 	args: {},
 	handler: async (ctx) => {
-		const identity = ctx.userSessionContext?.user;
-		if (!identity) {
-			throw new Error('Not authenticated');
+		const user = ctx.userSessionContext?.user;
+		if (!user) {
+			throw new ConvexError('Not authenticated');
 		}
-		console.log(identity);
 
 		const tasks = await ctx.db
 			.query('tasks')
-			// .filter((task) => task.userId === identity._id)
+			.withIndex('by_user', (q) => q.eq('userId', user.id))
 			.collect();
 		return tasks.map((task) => ({ ...task, assigner: 'tom' }));
+	}
+});
+
+export const add = mutationWithAuth({
+	args: { text: v.string(), isCompleted: v.boolean() },
+	handler: async (ctx, args) => {
+		const user = ctx.userSessionContext?.user;
+		if (!user) {
+			throw new ConvexError('Not authenticated');
+		}
+
+		const newTaskId = await ctx.db.insert('tasks', {
+			text: args.text,
+			isCompleted: args.isCompleted,
+			userId: user.id
+		});
+		return newTaskId;
 	}
 });
