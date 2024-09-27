@@ -33,3 +33,26 @@ export const add = mutationWithAuth({
 		return newTaskId;
 	}
 });
+
+export const deleteTask = mutationWithAuth({
+	args: { id: v.id('tasks') },
+	handler: async (ctx, args) => {
+		const user = ctx.userSessionContext?.user;
+		if (!user) {
+			throw new ConvexError('Not authenticated');
+		}
+		await ctx.db.delete(args.id);
+	}
+});
+
+export const toggleCompleted = mutationWithAuth({
+	args: { id: v.id('tasks'), isCompleted: v.boolean() },
+	handler: async (ctx, args) => {
+		const user = ctx.userSessionContext?.user;
+		if (!user) {
+			throw new ConvexError('Not authenticated');
+		}
+		const { id, isCompleted } = args;
+		await ctx.db.patch(id, { isCompleted: !!isCompleted });
+	}
+});

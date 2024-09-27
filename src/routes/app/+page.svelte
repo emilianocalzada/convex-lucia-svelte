@@ -18,6 +18,20 @@
 			isCompleted: isCompleted
 		});
 	}
+	async function toggleCompleted(taskId: string, isCompleted: boolean) {
+		await convex.mutation(api.tasks.toggleCompleted, {
+			sessionId: sessionId,
+			id: taskId,
+			isCompleted: isCompleted
+		});
+	}
+
+	async function deleteTask(taskId: string) {
+		await convex.mutation(api.tasks.deleteTask, {
+			sessionId: sessionId,
+			id: taskId
+		});
+	}
 
 	let text = $state('');
 	let isCompleted = $state(false);
@@ -46,9 +60,14 @@
 	<ul>
 		{#each query.data as task}
 			<li>
-				{task.isCompleted ? '☑' : '☐'}
+				<input
+					type="checkbox"
+					checked={task.isCompleted}
+					onchange={() => toggleCompleted(task._id, !task.isCompleted)}
+				/>
 				<span>{task.text}</span>
 				<span>assigned by {task.assigner}</span>
+				<Button variant="destructive" on:click={() => deleteTask(task._id)}>Delete</Button>
 			</li>
 		{/each}
 	</ul>
